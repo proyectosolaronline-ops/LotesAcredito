@@ -106,17 +106,40 @@
             cargarEdicion()
         };
 
-        function centrarUltimo(){
-            fetch(GAS_URL+'?tipo=lotes').then(function(r){return r.json()}).then(function(d){
-                if(d.success&&d.data&&d.data.lotes&&d.data.lotes.length){
-                    var l=d.data.lotes,l2=l[l.length-1],lat,lng,cod;
-                    if(Array.isArray(l2)){lat=parseFloat(l2[7]);lng=parseFloat(l2[8]);cod=l2[1]}
-                    else{lat=parseFloat(l2.lat);lng=parseFloat(l2.lng);cod=l2.codigolote}
-                    if(!isNaN(lat)&&!isNaN(lng)){mapa.setView([lat,lng],17);L.marker([lat,lng]).addTo(mapa).bindPopup('🏠 '+cod).openPopup()}
-                }
-            }).catch(function(){})
+function centrarUltimo(){
+    fetch(GAS_URL+'?tipo=lotes')
+    .then(function(r){return r.json()})
+    .then(function(d){
+        if(d && d.success && d.data && d.data.lotes && d.data.lotes.length > 0){
+            var l = d.data.lotes;
+            var l2 = l[l.length-1];
+            var lat, lng, cod;
+            
+            if(Array.isArray(l2)){
+                lat = parseFloat(l2[7]);
+                lng = parseFloat(l2[8]);
+                cod = l2[1] || 'Lote';
+            } else {
+                lat = parseFloat(l2.lat);
+                lng = parseFloat(l2.lng);
+                cod = l2.codigolote || 'Lote';
+            }
+            
+            if(!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0){
+                mapa.setView([lat, lng], 17);
+                L.marker([lat, lng])
+                    .addTo(mapa)
+                    .bindPopup('🏠 ' + cod)
+                    .openPopup();
+            }
         }
-
+        // Si no hay lotes o falla, se queda en San Quintín (ya definido en window.onload)
+    })
+    .catch(function(err){
+        console.log('Sin conexión a GAS, mapa en San Quintín');
+        // Se queda en San Quintín
+    });
+}
         function colocarMarcador(lat,lng){
             if(marcadorLote)mapa.removeLayer(marcadorLote);
             marcadorLote=L.marker([lat,lng],{draggable:true}).addTo(mapa);
